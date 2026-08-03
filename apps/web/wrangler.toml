@@ -1,0 +1,10 @@
+name = "dst-web"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Cloudflare Pages configuration
+pages_build_output_dir = ".next"
+
+# Environment variables (set in Cloudflare dashboard)
+[vars]
+NEXT_PUBLIC_API_URL = "https://your-api.workers.dev"

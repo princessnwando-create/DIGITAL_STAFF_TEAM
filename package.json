@@ -1,0 +1,23 @@
+{
+  "name": "dst-platform",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --workspace=@dst/web",
+    "dev:api": "npm run dev --workspace=@dst/api",
+    "build": "npm run build --workspace=@dst/web",
+    "build:api": "npm run build --workspace=@dst/api",
+    "start": "npm run start --workspace=@dst/web",
+    "start:api": "npm run start --workspace=@dst/api",
+    "lint": "npm run lint --workspace=@dst/web",
+    "db:generate": "npm run db:generate --workspace=@dst/api",
+    "db:push": "npm run db:push --workspace=@dst/api"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

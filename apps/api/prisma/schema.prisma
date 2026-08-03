@@ -1,0 +1,560 @@
+// Prisma schema for Digital Staff Team (DST)
+// Multi-tenant SaaS Platform with AI Employees
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER & AUTHENTICATION
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  firstName     String
+  lastName      String
+  avatar        String?
+  emailVerified DateTime?
+  mfaEnabled    Boolean   @default(false)
+  mfaSecret     String?
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  workspaceMemberships WorkspaceMember[]
+  sessions            Session[]
+  
+  @@map("users")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  token        String   @unique
+  expiresAt    DateTime
+  ipAddress    String?
+  userAgent    String?
+  
+  createdAt    DateTime @default(now())
+  
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("sessions")
+}
+
+// ============================================
+// WORKSPACE (TENANT)
+// ============================================
+
+model Workspace {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  logo        String?
+  brandColor  String   @default("#3B82F6")
+  
+  // Subscription
+  plan        WorkspacePlan @default(FREE)
+  subscriptionId   String?
+  subscriptionEnd  DateTime?
+  
+  // Settings
+  settings    Json     @default("{}")
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  members     WorkspaceMember[]
+  departments Department[]
+  aiEmployees AIEmployee[]
+  knowledgeBases KnowledgeBase[]
+  workflows   Workflow[]
+  templates   Template[]
+  
+  @@map("workspaces")
+}
+
+enum WorkspacePlan {
+  FREE
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+model WorkspaceMember {
+  id          String   @id @default(cuid())
+  userId      String
+  workspaceId String
+  role        MemberRole @default(MEMBER)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, workspaceId])
+  @@map("workspace_members")
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  MANAGER
+  MEMBER
+  GUEST
+}
+
+// ============================================
+// DEPARTMENTS
+// ============================================
+
+model Department {
+  id          String   @id @default(cuid())
+  workspaceId String
+  name        String
+  description String?
+  color       String   @default("#3B82F6")
+  icon        String?
+  
+  parentId    String?
+  order       Int      @default(0)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  parent      Department? @relation("DepartmentHierarchy", fields: [parentId], references: [id])
+  children    Department[] @relation("DepartmentHierarchy")
+  aiEmployees AIEmployee[]
+  
+  @@map("departments")
+}
+
+// ============================================
+// AI EMPLOYEES
+// ============================================
+
+model AIEmployee {
+  id          String   @id @default(cuid())
+  workspaceId String
+  departmentId String?
+  
+  // Basic Info
+  name        String
+  role        String
+  description String?
+  avatar      String?
+  
+  // Status
+  status      AIEmployeeStatus @default(ACTIVE)
+  
+  // AI Configuration
+  model       String   @default("gpt-4")
+  prompt      String   @default("")
+  temperature Float    @default(0.7)
+  maxTokens   Int      @default(2000)
+  
+  // Capabilities
+  skills      String[] @default([])
+  tools       String[] @default([])
+  memorySources String[] @default([])
+  
+  // Communication
+  communicationStyle String @default("professional")
+  language      String   @default("en")
+  
+  // Work Schedule
+  workSchedule Json     @default("{\"enabled\": true, \"hours\": \"24/7\"}")
+  
+  // Hierarchy
+  managerId    String?
+  
+  // Permissions
+  permissions  Json     @default("[]")
+  approvalLimit Decimal? @default(0)
+  
+  // KPIs
+  kpis         Json     @default("[]")
+  
+  // Memory
+  memory       Json     @default("[]")
+  
+  // Metrics
+  tasksCompleted Int     @default(0)
+  avgResponseTime Int?   @default(0)
+  satisfactionScore Float?
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  department   Department? @relation(fields: [departmentId], references: [id])
+  manager     AIEmployee? @relation("AIManagerSubordinate", fields: [managerId], references: [id])
+  subordinates AIEmployee[] @relation("AIManagerSubordinate")
+  
+  conversations AIConversation[]
+  tasks         AITask[]
+  knowledge     KnowledgeEntry[]
+  
+  @@map("ai_employees")
+}
+
+enum AIEmployeeStatus {
+  ACTIVE
+  INACTIVE
+  TRAINING
+  MAINTENANCE
+}
+
+// ============================================
+// AI CONVERSATIONS & MEMORY
+// ============================================
+
+model AIConversation {
+  id            String   @id @default(cuid())
+  aiEmployeeId  String
+  userId        String?
+  sessionId     String?
+  
+  messages      AIMessage[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  aiEmployee    AIEmployee @relation(fields: [aiEmployeeId], references: [id], onDelete: Cascade)
+  
+  @@map("ai_conversations")
+}
+
+model AIMessage {
+  id              String   @id @default(cuid())
+  conversationId  String
+  role            MessageRole
+  content         String
+  metadata        Json?
+  
+  createdAt       DateTime @default(now())
+  
+  conversation    AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  @@map("ai_messages")
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+  TOOL
+}
+
+// ============================================
+// AI TASKS
+// ============================================
+
+model AITask {
+  id            String   @id @default(cuid())
+  aiEmployeeId  String
+  title         String
+  description   String?
+  
+  status        TaskStatus @default(PENDING)
+  priority      TaskPriority @default(MEDIUM)
+  
+  input         Json?
+  output        Json?
+  error         String?
+  
+  startedAt     DateTime?
+  completedAt   DateTime?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  aiEmployee    AIEmployee @relation(fields: [aiEmployeeId], references: [id], onDelete: Cascade)
+  
+  @@map("ai_tasks")
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+// ============================================
+// KNOWLEDGE BASE
+// ============================================
+
+model KnowledgeBase {
+  id          String   @id @default(cuid())
+  workspaceId String
+  name        String
+  description String?
+  type        KnowledgeType @default(DOCUMENTS)
+  
+  settings    Json     @default("{}")
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  entries     KnowledgeEntry[]
+  
+  @@map("knowledge_bases")
+}
+
+enum KnowledgeType {
+  DOCUMENTS
+  FAQ
+  POLICIES
+  PRODUCT
+  SALES
+  HR
+  CUSTOM
+}
+
+model KnowledgeEntry {
+  id            String   @id @default(cuid())
+  knowledgeBaseId String
+  aiEmployeeId  String?
+  
+  title         String
+  content       String
+  
+  // For vector search
+  vector        Float[]?
+  metadata      Json?
+  
+  source        String?
+  sourceUrl     String?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  knowledgeBase KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  aiEmployee    AIEmployee? @relation(fields: [aiEmployeeId], references: [id], onDelete: SetNull)
+  
+  @@map("knowledge_entries")
+}
+
+// ============================================
+// WORKFLOWS
+// ============================================
+
+model Workflow {
+  id          String   @id @default(cuid())
+  workspaceId String
+  name        String
+  description String?
+  
+  status      WorkflowStatus @default(DRAFT)
+  
+  // Definition stored as JSON
+  definition  Json
+  
+  // Stats
+  totalRuns   Int      @default(0)
+  successRate Float    @default(100)
+  lastRunAt   DateTime?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  runs        WorkflowRun[]
+  nodes       WorkflowNode[]
+  triggers    WorkflowTrigger[]
+  
+  @@map("workflows")
+}
+
+enum WorkflowStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  DISABLED
+}
+
+model WorkflowTrigger {
+  id          String   @id @default(cuid())
+  workflowId  String
+  type        TriggerType
+  config      Json
+  
+  createdAt   DateTime @default(now())
+  
+  workflow    Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  
+  @@map("workflow_triggers")
+}
+
+enum TriggerType {
+  MANUAL
+  SCHEDULE
+  WEBHOOK
+  EVENT
+  FORM
+}
+
+model WorkflowNode {
+  id          String   @id @default(cuid())
+  workflowId   String
+  type        NodeType
+  name        String
+  config      Json
+  position     Json     // {x, y} for visual editor
+  
+  createdAt   DateTime @default(now())
+  
+  workflow    Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  
+  @@map("workflow_nodes")
+}
+
+enum NodeType {
+  TRIGGER
+  ACTION
+  CONDITION
+  FILTER
+  TRANSFORM
+  NOTIFICATION
+  AI_TASK
+  DELAY
+  LOOP
+  PARALLEL
+  END
+}
+
+model WorkflowRun {
+  id          String   @id @default(cuid())
+  workflowId  String
+  triggerData Json?
+  
+  status      RunStatus @default(RUNNING)
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  error       String?
+  
+  workflow    Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  logs        WorkflowLog[]
+  
+  @@map("workflow_runs")
+}
+
+enum RunStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model WorkflowLog {
+  id          String   @id @default(cuid())
+  runId       String
+  nodeId      String?
+  level       LogLevel
+  message     String
+  data        Json?
+  
+  createdAt   DateTime @default(now())
+  
+  run         WorkflowRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  
+  @@map("workflow_logs")
+}
+
+enum LogLevel {
+  DEBUG
+  INFO
+  WARN
+  ERROR
+}
+
+// ============================================
+// INDUSTRY TEMPLATES
+// ============================================
+
+model Template {
+  id          String   @id @default(cuid())
+  workspaceId String?
+  
+  name        String
+  slug        String   @unique
+  description String
+  category    TemplateCategory
+  
+  // Content as JSON
+  departments  Json     @default("[]")
+  aiEmployees  Json    @default("[]")
+  workflows   Json     @default("[]")
+  dashboards  Json    @default("[]")
+  
+  // Stats
+  installations Int   @default(0)
+  rating        Float?
+  
+  isPublic    Boolean  @default(false)
+  isFeatured  Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  
+  @@map("templates")
+}
+
+enum TemplateCategory {
+  GENERAL
+  RETAIL
+  HEALTHCARE
+  EDUCATION
+  HOSPITALITY
+  MANUFACTURING
+  FINANCE
+  TECHNOLOGY
+  NONPROFIT
+  GOVERNMENT
+}
+
+// ============================================
+// AUDIT LOG
+// ============================================
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  workspaceId String?
+  userId      String?
+  
+  action      String
+  resource    String
+  resourceId  String?
+  
+  metadata    Json?
+  ipAddress   String?
+  
+  createdAt   DateTime @default(now())
+  
+  @@map("audit_logs")
+  @@index([workspaceId, createdAt])
+  @@index([userId, createdAt])
+}
