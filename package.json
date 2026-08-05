@@ -9,7 +9,7 @@
     "build:api": "npm run build --workspace=@dst/api",
     "start": "npm run start --workspace=@dst/web",
     "start:api": "npm run start --workspace=@dst/api",
-    "lint": "npm run lint --workspace=@dst/web",
+    "lint": "cd apps/web && npm run lint",
     "db:generate": "npm run db:generate --workspace=@dst/api",
     "db:push": "npm run db:push --workspace=@dst/api"
   },
