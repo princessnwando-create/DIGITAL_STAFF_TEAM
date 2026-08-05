@@ -62,7 +62,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nextjs-build
-          path: apps/web/.next
+          path: |
+            apps/web/.next/standalone
+            apps/web/.next/static
           retention-days: 1
 
   # ============================================
@@ -86,13 +88,18 @@ jobs:
           name: nextjs-build
           path: apps/web/.next
 
+      - name: Prepare for deployment
+        run: |
+          mkdir -p apps/web/.next/standalone/.next
+          cp -r apps/web/.next/static apps/web/.next/standalone/.next/
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@v1
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: dst-web
-          directory: apps/web/.next
+          directory: apps/web/.next/standalone
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
 
   # ============================================
