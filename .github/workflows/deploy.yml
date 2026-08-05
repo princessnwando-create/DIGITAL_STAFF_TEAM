@@ -9,10 +9,10 @@ on:
 
 jobs:
   # ============================================
-  # Build Frontend
+  # Lint & Type Check
   # ============================================
-  build-web:
-    name: Build Frontend
+  lint:
+    name: Lint & Type Check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -24,7 +24,32 @@ jobs:
           node-version: '22'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
+
+      - name: Lint
+        run: npm run lint --workspace=@dst/web
+
+      - name: Type check
+        run: npm run type-check --workspace=@dst/web
+
+  # ============================================
+  # Build Frontend
+  # ============================================
+  build-web:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
 
       - name: Build
         run: npm run build
