@@ -1,6 +1,6 @@
 {
   "build_command": "cd apps/web && npm ci --legacy-peer-deps && npm run build",
-  "destination_dir": "apps/web/.next/standalone",
+  "destination_dir": "apps/web/.next",
   "web_analytics": {
     "enabled": false
   }
