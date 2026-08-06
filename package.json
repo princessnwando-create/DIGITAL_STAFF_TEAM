@@ -8,7 +8,7 @@
     "build": "npm run build --workspace=@dst/web",
     "build:cf": "cd apps/web && npm install --legacy-peer-deps && npx next build",
     "build:cf2": "npm ci --legacy-peer-deps && npm run build --workspace=@dst/web",
-    "build:cf3": "npm ci --legacy-peer-deps && npm run build --workspace=@dst/web",
+    "build:cf3": "npm ci --legacy-peer-deps && npm run build --workspace=@dst/web && cd apps/web/.next && cp -r server/app/*.html . 2>/dev/null || true && cp -r server/app/ai-employees/*.html ai-employees/ 2>/dev/null || true && cp -r server/pages/*.html . 2>/dev/null || true",
     "build:api": "npm run build --workspace=@dst/api",
     "start": "npm run start --workspace=@dst/web",
     "start:api": "npm run start --workspace=@dst/api",
