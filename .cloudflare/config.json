@@ -1,0 +1,8 @@
+{
+  "pages": {
+    "project_name": "DIGITAL_STAFF_TEAM",
+    "build_command": "cd apps/web && npm ci && npm run build",
+    "build_directory": "apps/web/.next/standalone",
+    "root_dir": "."
+  }
+}
