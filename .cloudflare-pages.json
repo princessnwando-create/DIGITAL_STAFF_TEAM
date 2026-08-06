@@ -1,5 +1,5 @@
 {
-  "build_command": "cd apps/web && npm ci --legacy-peer-deps && npm run build",
+  "build_command": "npm run build:cf",
   "destination_dir": "apps/web/.next",
   "web_analytics": {
     "enabled": false
