@@ -10,6 +10,8 @@ const nextConfig = {
     ],
   },
   skipTrailingSlashRedirect: true,
+  // Cloudflare Pages compatibility
+  serverExternalPackages: ['sharp', 'pino', 'prisma'],
   // Headers for Cloudflare caching
   async headers() {
     return [

@@ -8,6 +8,7 @@
     "build": "npm run build --workspace=@dst/web",
     "build:cf": "cd apps/web && npm install --legacy-peer-deps && npx next build",
     "build:cf2": "npm ci --legacy-peer-deps && npm run build --workspace=@dst/web",
+    "build:cf3": "npm install --legacy-peer-deps && npm run build",
     "build:api": "npm run build --workspace=@dst/api",
     "start": "npm run start --workspace=@dst/web",
     "start:api": "npm run start --workspace=@dst/api",
