@@ -1,5 +1,5 @@
 {
-  "build_command": "npm run build:cf",
+  "build_command": "npm run build:cf3",
   "destination_dir": "apps/web/.next",
   "web_analytics": {
     "enabled": false
