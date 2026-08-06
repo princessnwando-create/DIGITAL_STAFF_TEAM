@@ -8,7 +8,7 @@
     "build": "npm run build --workspace=@dst/web",
     "build:cf": "cd apps/web && npm install --legacy-peer-deps && npx next build",
     "build:cf2": "npm ci --legacy-peer-deps && npm run build --workspace=@dst/web",
-    "build:cf3": "npm ci --legacy-peer-deps && npm run build --workspace=@dst/web && npx @cloudflare/next-on-pages",
+    "build:cf3": "npm ci --legacy-peer-deps && npm run build --workspace=@dst/web",
     "build:api": "npm run build --workspace=@dst/api",
     "start": "npm run start --workspace=@dst/web",
     "start:api": "npm run start --workspace=@dst/api",
@@ -29,6 +29,7 @@
     "@eslint/js": "^10.0.1",
     "eslint": "^10.8.0",
     "eslint-config-next": "^16.3.0",
+    "next": "^16.3.0",
     "typescript-eslint": "^8.66.0"
   }
 }
