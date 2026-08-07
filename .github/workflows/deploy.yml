@@ -61,7 +61,12 @@ jobs:
       - name: Copy static HTML files for Cloudflare Pages
         run: |
           cd apps/web/.next
+          rm -rf cache
           cp -r server/app/*.html . 2>/dev/null || true
+          mkdir -p login signup forgot-password
+          cp server/app/login.html login/index.html 2>/dev/null || true
+          cp server/app/signup.html signup/index.html 2>/dev/null || true
+          cp server/app/forgot-password.html forgot-password/index.html 2>/dev/null || true
           cp -r server/app/ai-employees/*.html ai-employees/ 2>/dev/null || true
           cp -r server/pages/*.html . 2>/dev/null || true
 
